@@ -86,28 +86,9 @@ namespace com_port_to_database
                     {
                         if (ArrayComPortsNames[index] == config[i].portName)
                         {
-                            if (comPortArr[i] != null)
-                            {
-                                comPortArr[i].Close();
-                                try
-                                {
-                                    // Create a task that will complete after a time delay
-                                    Task.Delay(500).ContinueWith(t =>
-                                    {
-                                        // Set a new configuration to the given serial port.
-                                        comPortArr[i].Open(config[i]);
-                                    });
-
-                                }
-                                catch(ArgumentOutOfRangeException e) { log.Error(e); }
-                                catch(TaskCanceledException e) { log.Error(e); }
-                                catch(ObjectDisposedException e) { log.Error(e); }
-                            } else
-                            {
-                                // A serial port initialization
-                                comPortArr[i] = new ComPort();
-                                comPortArr[i].Open(config[i]);
-                            }
+                            // A serial port initialization
+                            comPortArr[i] = new ComPort(config[i]);
+                            comPortArr[i].Open();
                             break;
                         }
                     }

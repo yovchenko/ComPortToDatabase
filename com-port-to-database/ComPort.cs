@@ -2,7 +2,6 @@
 using System.IO.Ports;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.IO;
 
 namespace com_port_to_database
@@ -10,30 +9,35 @@ namespace com_port_to_database
      class ComPort
     {
         public static bool _run;
-        public bool _continue;
+        private bool _continue;
         private SerialPort _serialPort;
         private Thread _readThread;
+        private Attributes.PortConfig portConfig;
+
+        public ComPort(Attributes.PortConfig portConfig)
+        {
+            this.portConfig = portConfig;
+        }
 
         // The method opens a new serial port connection
-        public void Open(Attributes.PortConfig pc)
+        public void Open()
         {
-            bool _error = false;
             _run = true;
             _serialPort = new SerialPort();
 
             try
             {
                 // set the appropriate properties
-                _serialPort.PortName = pc.portName;
-                _serialPort.BaudRate = Convert.ToInt32(pc.baudRate);
-                _serialPort.DataBits = Convert.ToInt16(pc.dataBits);
-                _serialPort.StopBits = (StopBits)Enum.Parse(typeof(StopBits), pc.stopBits);
-                _serialPort.Handshake = (Handshake)Enum.Parse(typeof(Handshake), pc.handShaking);
-                _serialPort.Parity = (Parity)Enum.Parse(typeof(Parity), pc.parity);
+                _serialPort.PortName = portConfig.portName;
+                _serialPort.BaudRate = Convert.ToInt32(portConfig.baudRate);
+                _serialPort.DataBits = Convert.ToInt16(portConfig.dataBits);
+                _serialPort.StopBits = (StopBits)Enum.Parse(typeof(StopBits), portConfig.stopBits);
+                _serialPort.Handshake = (Handshake)Enum.Parse(typeof(Handshake), portConfig.handShaking);
+                _serialPort.Parity = (Parity)Enum.Parse(typeof(Parity), portConfig.parity);
 
                 // Set the read/write timeouts
-                _serialPort.ReadTimeout = Convert.ToInt32(pc.timeOut);
-                _serialPort.WriteTimeout = Convert.ToInt32(pc.timeOut);
+                _serialPort.ReadTimeout = Convert.ToInt32(portConfig.timeOut);
+                _serialPort.WriteTimeout = Convert.ToInt32(portConfig.timeOut);
             }
             catch (Exception e)
             {
@@ -44,32 +48,30 @@ namespace com_port_to_database
             try
             {
                 _serialPort.Open();
-                Service.log.Debug(Convert.ToString(pc.portName) + " is open");
             }
-            catch (UnauthorizedAccessException)
-            { _error = true; }
-            catch (ArgumentOutOfRangeException)
-            { _error = true; }
-            catch (ArgumentException)
-            { _error = true; }
-            catch (IOException)
-            { _error = true; }
-            catch (InvalidOperationException)
-            { _error = true; }
+            catch (UnauthorizedAccessException e)
+            { Service.log.Error(e); }
+            catch (ArgumentOutOfRangeException e)
+            { Service.log.Error(e); }
+            catch (ArgumentException e)
+            { Service.log.Error(e); }
+            catch (IOException e)
+            { Service.log.Error(e); }
+            catch (InvalidOperationException e)
+            { Service.log.Error(e); }
 
             if (_serialPort.IsOpen)
             {
+                Service.log.Debug(Convert.ToString(portConfig.portName) + " is open");
                 // Create a new thread to read and write on the serial port 
                 _continue = true;
-                _readThread = new Thread(() => Read(pc.portData));
-                _readThread.Start();
-            }
-            else _error = true;
-
-            if (_error)
-            {
-                _continue = false;
-                Service.log.Error("Unable to open serial com port: " + pc.portName);
+                _readThread = new Thread(() => Read(portConfig.portData));
+                try
+                {
+                    _readThread.Start();
+                }
+                catch(ThreadStateException e) { Service.log.Error(e); }
+                catch (OutOfMemoryException e) { Service.log.Error(e); }
             }
         }
 
@@ -77,12 +79,17 @@ namespace com_port_to_database
         private void Read(List<Attributes.PortData> portData)
         {
             byte i = 0;
-            int len = portData.Capacity;
+            int len = portData.Count;
+            string id = portData[i].id;
 
             while (_continue && _run)
             {
                 // Send the data to the serial port 
-                Send(portData[i].send);
+                if (!String.IsNullOrEmpty(portData[i].send))
+                {
+                    Send(portData[i].send);
+                    id = portData[i].id;
+                }
 
                 if (i < len - 1) i++;
                 else i = 0;
@@ -92,7 +99,7 @@ namespace com_port_to_database
                     string message = _serialPort.ReadLine();
 
                     // The static method writes the serial port data to SQL database
-                    if (message != null) SqlData.Write(message, portData[i].id);
+                    if (!String.IsNullOrEmpty(message)) SqlData.Write(message, id);
                 }
                 catch (TimeoutException) { }
                 catch (ThreadAbortException) { }
@@ -109,9 +116,9 @@ namespace com_port_to_database
          {
              try
              {
-                 var bytes = Encoding.ASCII.GetBytes(IncomingData);
-                 _serialPort.Write(bytes, 0, bytes.Length);
-             }
+              // Send the user's text straight out the port 
+              _serialPort.WriteLine(IncomingData);
+            }
              catch (TimeoutException) { }  
              catch (InvalidOperationException) { }
              catch (ArgumentOutOfRangeException) { }
