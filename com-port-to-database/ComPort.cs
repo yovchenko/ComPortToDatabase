@@ -9,7 +9,7 @@ namespace com_port_to_database
      class ComPort
     {
         public static bool _run;
-        private bool _continue;
+        public bool _continue;
         private SerialPort _serialPort;
         private Thread _readThread;
         private Attributes.PortConfig portConfig;
@@ -22,8 +22,10 @@ namespace com_port_to_database
         // The method opens a new serial port connection
         public void Open()
         {
-            _run = true;
             _serialPort = new SerialPort();
+
+            // At least one thread is going to be created
+            _run = true;
 
             try
             {
@@ -72,6 +74,9 @@ namespace com_port_to_database
                 }
                 catch(ThreadStateException e) { Service.log.Error(e); }
                 catch (OutOfMemoryException e) { Service.log.Error(e); }
+            } else
+            {
+                Service.InitConfig();
             }
         }
 
@@ -80,35 +85,47 @@ namespace com_port_to_database
         {
             byte i = 0;
             int len = portData.Count;
-            string id = portData[i].id;
+
+            // The flag response-timeout
+            bool flag = true;
 
             while (_continue && _run)
             {
+
                 // Send the data to the serial port 
-                if (!String.IsNullOrEmpty(portData[i].send))
+                if (!String.IsNullOrEmpty(portData[i].send) && flag)
                 {
                     Send(portData[i].send);
-                    id = portData[i].id;
+                    flag = false;
                 }
+
+                string id = portData[i].id;
 
                 if (i < len - 1) i++;
                 else i = 0;
 
                 try
                 {
+
                     string message = _serialPort.ReadLine();
 
                     // The static method writes the serial port data to SQL database
-                    if (!String.IsNullOrEmpty(message)) SqlData.Write(message, id);
+                    if (!String.IsNullOrEmpty(message))
+                    {
+                        SqlData.Write(message, id);
+                        flag = true;
+                    }
+
                 }
-                catch (TimeoutException) { }
-                catch (ThreadAbortException) { }
-                catch (IOException) { }
-                catch (Exception) { }
+                catch (TimeoutException) { flag = true; }
+                catch (ThreadAbortException) { _continue = false; }
+                catch (IOException) { _continue = false; }
+                catch (Exception) { _continue = false;  }
 
             }
             _readThread.Join(500);
             _serialPort.Close();
+            Service.InitConfig();
         }
 
          // The method sends data to the serial port

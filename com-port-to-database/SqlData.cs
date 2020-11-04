@@ -20,9 +20,11 @@ namespace com_port_to_database
                     // Create and ODBC connection
                     connection.Open();
 
-                    // Get number of rows in the port_config table
-                    string queryString = @"SELECT COUNT([port_name])
-                                               FROM[Com_Port].[dbo].[port_config];";
+                    // Get number of rows with the serial port settings
+                    string queryString = @"SELECT COUNT(*) OVER () AS TotalRecords 
+                                           FROM[Com_Port].[dbo].[port_config] AS pc
+                                           JOIN port_data AS pd ON pc.port_name = pd.port_name
+                                           GROUP BY pc.port_name;";
 
                     OdbcCommand command = new OdbcCommand(queryString, connection);
 
@@ -30,7 +32,7 @@ namespace com_port_to_database
                     OdbcDataReader reader = command.ExecuteReader(System.Data.CommandBehavior.SingleRow);
 
                     reader.Read();
-                    // Save the result of SQL-query to the variable 
+
                     byte portCounter = reader.GetByte(0);
 
                     // Always call Close and Dispose when done reading
@@ -38,19 +40,22 @@ namespace com_port_to_database
                     command.Dispose();
 
                     // Read the COM-port configuration data
-                    queryString = @"SELECT[port_name]
-                                              ,[baud_rate]
-                                              ,[data_bits]
-                                              ,[stop_bits]
-                                              ,[parity]
-                                              ,[handshake]
-                                              ,[timeout]
-                                           FROM [Com_Port].[dbo].[port_config];";
+                    queryString = @"SELECT DISTINCT pc.[port_name]
+	                                        ,pc.[baud_rate]
+	                                        ,pc.[data_bits]
+	                                        ,pc.[stop_bits]
+	                                        ,pc.[parity]
+	                                        ,pc.[handshake]
+	                                        ,pc.[timeout]
+                                    FROM [Com_Port].[dbo].[port_config] AS pc 
+                                    JOIN port_data AS pd ON pc.port_name = pd.port_name;";
 
                     command = new OdbcCommand(queryString, connection);
 
                     // Execute the data reader and access the port_config table data
                     reader = command.ExecuteReader();
+
+                    if (!reader.HasRows) return null;
 
                     string ports = null;
 
@@ -88,6 +93,8 @@ namespace com_port_to_database
 
                     // Execute the data reader and access the data to send
                     reader = command.ExecuteReader();
+
+                    if (!reader.HasRows) return null;
 
                     // Add the data to send to the structure 
                     while (reader.Read())

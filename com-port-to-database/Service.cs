@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO.Ports;
 using System.ComponentModel;
-using System.Threading.Tasks;
 
 namespace com_port_to_database
 {
@@ -41,7 +40,7 @@ namespace com_port_to_database
             aTimer.Enabled = true;
         }
 
-        private static void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
+        private static void OnTimedEvent(object source, System.Timers.ElapsedEventArgs e)
         {
             // Set initial configuration
             InitConfig();
@@ -59,7 +58,7 @@ namespace com_port_to_database
                 return;
             }
    
-            string[] ArrayComPortsNames = null;
+            string[] ArrayComPortsNames;
             int index = -1;
 
             try
@@ -76,6 +75,8 @@ namespace com_port_to_database
 
             Array.Sort(ArrayComPortsNames);
 
+            byte activePorts = 0;
+
             // Compare SQL database data with the list of valid serial port
             if (ArrayComPortsNames.GetUpperBound(0) != index)
             {
@@ -86,9 +87,19 @@ namespace com_port_to_database
                     {
                         if (ArrayComPortsNames[index] == config[i].portName)
                         {
-                            // A serial port initialization
+                            if (comPortArr[i] != null)
+                            {
+                                // The thread is already running
+                                if (comPortArr[i]._continue)
+                                {
+                                    activePorts++;
+                                    break;
+                                }
+                            }
+                            // A new serial port initialization
                             comPortArr[i] = new ComPort(config[i]);
                             comPortArr[i].Open();
+                            activePorts++;
                             break;
                         }
                     }
@@ -96,9 +107,9 @@ namespace com_port_to_database
                 while (index != ArrayComPortsNames.GetUpperBound(0));
             }
 
-            if(ComPort._run)
+            if(activePorts == config.Length)
             {
-                log.Debug("ODBC connection is established!");
+                log.Debug("ODBC connection is established. All serial ports are found!");
             } else
             {
                 log.Error("The serial port with the given name was not detected!");
@@ -111,6 +122,7 @@ namespace com_port_to_database
         // The method is called when the service is about to stop
         public void OnStop()
         {
+            // Stop all currently running threads
             ComPort._run = false;
             aTimer.Enabled = false;
         }
