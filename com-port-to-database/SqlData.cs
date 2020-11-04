@@ -134,19 +134,17 @@ namespace com_port_to_database
         }
 
         // The static method writes the serial port response to SQL database
-        public static void Write(string res, string id)
+        public static void Write(string id, string message)
         {
             try
             {
                 string queryString = "UPDATE [Com_Port].[dbo].[port_data] " +
                 "SET response_date_time = '" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "'," +
-                "response_data = '" + res + "' " +
+                "response_data = '" + message + "' " +
                 "WHERE id = '" + id + "';";
-
                 using (OdbcConnection connection = new OdbcConnection(connectionString))
                 {
                     OdbcCommand command = new OdbcCommand(queryString, connection);
-
                     connection.Open();
 
                     // Execute the data reader and write the comp port data to port_data table
@@ -155,6 +153,8 @@ namespace com_port_to_database
                     // Always call Close and Dispose when done reading
                     reader.Close();
                     command.Dispose();
+                    /* The connection is automatically closed at
+                    the end of the Using block. */
                 }
             }
             catch (OdbcException e)
@@ -165,8 +165,6 @@ namespace com_port_to_database
             {
                 Service.log.Error("The exception occurred while writing the COM-port response to SQL database : " + e);
             }
-            /* The connection is automatically closed at
-                      the end of the Using block. */
         }
     }
 }

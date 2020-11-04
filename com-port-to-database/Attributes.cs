@@ -10,6 +10,13 @@ namespace com_port_to_database
             public string id;
             public string send;
         }
+
+        public struct ReadData
+        {
+            public string id;
+            public string read;
+        }
+
         public struct PortConfig
         {
             public string portName;

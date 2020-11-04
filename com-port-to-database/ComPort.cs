@@ -29,7 +29,7 @@ namespace com_port_to_database
 
             try
             {
-                // set the appropriate properties
+                // Set the appropriate properties
                 _serialPort.PortName = portConfig.portName;
                 _serialPort.BaudRate = Convert.ToInt32(portConfig.baudRate);
                 _serialPort.DataBits = Convert.ToInt16(portConfig.dataBits);
@@ -67,7 +67,7 @@ namespace com_port_to_database
                 Service.log.Debug(Convert.ToString(portConfig.portName) + " is open");
                 // Create a new thread to read and write on the serial port 
                 _continue = true;
-                _readThread = new Thread(() => Read(portConfig.portData));
+                _readThread = new Thread(() => PortBegin(portConfig.portData));
                 try
                 {
                     _readThread.Start();
@@ -81,55 +81,60 @@ namespace com_port_to_database
         }
 
         // The method reads and writes data on the serial port 
-        private void Read(List<Attributes.PortData> portData)
+        private void PortBegin(List<Attributes.PortData> portData)
         {
             byte i = 0;
             int len = portData.Count;
+            Attributes.ReadData readData = 
+            new Attributes.ReadData { id = portData[i].id, read = null };
 
-            // The flag response-timeout
-            bool flag = true;
 
             while (_continue && _run)
             {
 
                 // Send the data to the serial port 
-                if (!String.IsNullOrEmpty(portData[i].send) && flag)
+                if (!String.IsNullOrEmpty(portData[i].send))
                 {
-                    Send(portData[i].send);
-                    flag = false;
+                    PortSend(portData[i].send);
                 }
 
-                string id = portData[i].id;
+                readData = PortRead(readData);
+
+                // The static method writes the serial port data to SQL database
+                if (!String.IsNullOrEmpty(readData.read))
+                {
+                    SqlData.Write(readData.id, readData.read);
+                }
 
                 if (i < len - 1) i++;
                 else i = 0;
 
-                try
-                {
-
-                    string message = _serialPort.ReadLine();
-
-                    // The static method writes the serial port data to SQL database
-                    if (!String.IsNullOrEmpty(message))
-                    {
-                        SqlData.Write(message, id);
-                        flag = true;
-                    }
-
-                }
-                catch (TimeoutException) { flag = true; }
-                catch (ThreadAbortException) { _continue = false; }
-                catch (IOException) { _continue = false; }
-                catch (Exception) { _continue = false;  }
-
+                readData.id = portData[i].id;
             }
             _readThread.Join(500);
             _serialPort.Close();
             Service.InitConfig();
         }
 
-         // The method sends data to the serial port
-         private void Send(string IncomingData)
+        // Read the data from the serial port using ReadLine method
+        private Attributes.ReadData PortRead(Attributes.ReadData rd)
+        {
+            try
+            {
+                // Read the serial port data
+                string message = _serialPort.ReadLine();
+                rd.read = message;
+                return rd;
+            }
+            catch (TimeoutException) { rd.read = null; }
+            catch (ThreadAbortException) { _continue = false; }
+            catch (IOException) { _continue = false; }
+            catch (Exception) { _continue = false; }
+            return rd;
+        }
+
+        // Send the data to the serial port using WriteLine method
+        private void PortSend(string IncomingData)
          {
              try
              {
@@ -137,16 +142,9 @@ namespace com_port_to_database
               _serialPort.WriteLine(IncomingData);
             }
              catch (TimeoutException) { }  
-             catch (InvalidOperationException) { }
-             catch (ArgumentOutOfRangeException) { }
-             catch (ArgumentException) { }
-             catch (Exception) { }
-        }
-
-        // The method closes the port connection
-        public void Close()
-        {
-            _continue = false;
+             catch (InvalidOperationException) { _continue = false; }
+             catch (ArgumentNullException) { _continue = false; }
+             catch (Exception) { _continue = false; }
         }
     }
 }
