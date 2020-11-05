@@ -13,9 +13,10 @@ namespace com_port_to_database
         // Windows 7, 8, and 10 limits the number of COM ports to 256.
         private static ComPort[] comPortArr = new ComPort[255];
 
-        private static System.Timers.Timer aTimer;
-
+        // Create a static instance of configuration for serial ports
         private static Attributes.PortConfig[] config = new Attributes.PortConfig[255];
+
+        private static System.Timers.Timer aTimer;
 
         // The method runs when the service is about to start
         public void OnStart()
@@ -52,14 +53,15 @@ namespace com_port_to_database
         {
             aTimer.Enabled = false;
 
-             byte len = SqlData.QueryPortsConfig(ref config);
+            // The static method 
+            byte len = SqlData.QueryPortsConfig(ref config);
 
             if (len == 0)
             {
                 aTimer.Enabled = true;
                 return;
             }
-   
+
             string[] ArrayComPortsNames;
             int index = -1;
 
@@ -109,17 +111,18 @@ namespace com_port_to_database
                 while (index != ArrayComPortsNames.GetUpperBound(0));
             }
 
-            if(activePorts == len)
+            if (activePorts == len)
             {
                 log.Debug("ODBC connection is established. All serial ports are found!");
-            } else
+            }
+            else
             {
                 log.Error("The serial port with the given name was not detected!");
                 aTimer.Enabled = true;
             }
         }
 
-  
+
 
         // The method is called when the service is about to stop
         public void OnStop()

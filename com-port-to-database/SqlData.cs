@@ -10,6 +10,7 @@ namespace com_port_to_database
         // ODBC-connection string
         private static readonly string connectionString = ConfigurationManager.ConnectionStrings["Com_Port"].ConnectionString;
 
+        private static Attributes.PortData portData = new Attributes.PortData();
         //The static method reads the serial port configuration from SQL database
         public static byte QueryPortsConfig(ref Attributes.PortConfig[] config)
         {
@@ -33,6 +34,14 @@ namespace com_port_to_database
                         // Execute the data reader and access the port_config table
                         using (OdbcDataReader reader = command.ExecuteReader(System.Data.CommandBehavior.SingleRow))
                         {
+                            if (!reader.HasRows)
+                            {
+                                // Always call Close and Dispose when done reading
+                                reader.Close();
+                                command.Dispose();
+                                return 0;
+                            }
+
                             reader.Read();
 
                             portCounter = reader.GetByte(0);
@@ -57,7 +66,13 @@ namespace com_port_to_database
                         // Execute the data reader and access the port_config table data
                         using (OdbcDataReader reader = command.ExecuteReader())
                         {
-                            if (!reader.HasRows || portCounter == 0) return 0;
+                            if (!reader.HasRows || portCounter == 0)
+                            {
+                                // Always call Close and Dispose when done reading
+                                reader.Close();
+                                command.Dispose();
+                                return 0;
+                            }
 
                             // Reassign a new value to the variable
                             portCounter = 0;
@@ -93,7 +108,13 @@ namespace com_port_to_database
                         // Execute the data reader and access the data to send
                         using (OdbcDataReader reader = command.ExecuteReader())
                         {
-                            if (!reader.HasRows || String.IsNullOrEmpty(ports)) return 0;
+                            if (!reader.HasRows || String.IsNullOrEmpty(ports))
+                            {
+                                // Always call Close and Dispose when done reading
+                                reader.Close();
+                                command.Dispose();
+                                return 0;
+                            }
 
                             // Add the data to send to the structure 
                             while (reader.Read())
@@ -102,7 +123,6 @@ namespace com_port_to_database
                                 {
                                     if (config[i].portName == Convert.ToString(reader["port_name"]))
                                     {
-                                        Attributes.PortData portData = new Attributes.PortData();
                                         portData.id = Convert.ToString(reader["id"]);
                                         portData.send = Convert.ToString(reader["send_data"]);
                                         config[i].portData.Add(portData);
