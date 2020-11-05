@@ -11,7 +11,7 @@ namespace com_port_to_database
         private static readonly string connectionString = ConfigurationManager.ConnectionStrings["Com_Port"].ConnectionString;
 
         //The static method reads the serial port configuration from SQL database
-        public static Attributes.PortConfig[] QueryPortsConfig()
+        public static byte QueryPortsConfig(ref Attributes.PortConfig[] config)
         {
             try
             {
@@ -26,18 +26,18 @@ namespace com_port_to_database
                                            JOIN port_data AS pd ON pc.port_name = pd.port_name
                                            GROUP BY pc.port_name;";
 
-                    OdbcCommand command = new OdbcCommand(queryString, connection);
+                    byte portCounter = 0;
 
-                    // Execute the data reader and access the port_config table.
-                    OdbcDataReader reader = command.ExecuteReader(System.Data.CommandBehavior.SingleRow);
+                    using (OdbcCommand command = new OdbcCommand(queryString, connection))
+                    {
+                        // Execute the data reader and access the port_config table
+                        using (OdbcDataReader reader = command.ExecuteReader(System.Data.CommandBehavior.SingleRow))
+                        {
+                            reader.Read();
 
-                    reader.Read();
-
-                    byte portCounter = reader.GetByte(0);
-
-                    // Always call Close and Dispose when done reading
-                    reader.Close();
-                    command.Dispose();
+                            portCounter = reader.GetByte(0);
+                        }
+                    }
 
                     // Read the COM-port configuration data
                     queryString = @"SELECT DISTINCT pc.[port_name]
@@ -50,36 +50,34 @@ namespace com_port_to_database
                                     FROM [Com_Port].[dbo].[port_config] AS pc 
                                     JOIN port_data AS pd ON pc.port_name = pd.port_name;";
 
-                    command = new OdbcCommand(queryString, connection);
-
-                    // Execute the data reader and access the port_config table data
-                    reader = command.ExecuteReader();
-
-                    if (!reader.HasRows) return null;
-
                     string ports = null;
 
-                    // Com port structure initialization
-                    Attributes.PortConfig[] config = new Attributes.PortConfig[portCounter];
-
-                    portCounter = 0;
-                    while (reader.Read())
+                    using (OdbcCommand command = new OdbcCommand(queryString, connection))
                     {
-                        config[portCounter].portName = Convert.ToString(reader["port_name"]);
-                        config[portCounter].baudRate = Convert.ToString(reader["baud_rate"]);
-                        config[portCounter].dataBits = Convert.ToString(reader["data_bits"]);
-                        config[portCounter].stopBits = Convert.ToString(reader["stop_bits"]);
-                        config[portCounter].parity = Convert.ToString(reader["parity"]);
-                        config[portCounter].handShaking = Convert.ToString(reader["handshake"]);
-                        config[portCounter].timeOut = Convert.ToString(reader["timeout"]);
-                        config[portCounter].portData = new List<Attributes.PortData> { };
-                        ports += "'" + config[portCounter].portName + "',";
-                        portCounter++;
-                    }
+                        // Execute the data reader and access the port_config table data
+                        using (OdbcDataReader reader = command.ExecuteReader())
+                        {
+                            if (!reader.HasRows || portCounter == 0) return 0;
 
-                    // Always call Close and Dispose when done reading
-                    reader.Close();
-                    command.Dispose();
+                            // Reassign a new value to the variable
+                            portCounter = 0;
+
+                            while (reader.Read())
+                            {
+                                config[portCounter].portName = Convert.ToString(reader["port_name"]);
+                                config[portCounter].baudRate = Convert.ToString(reader["baud_rate"]);
+                                config[portCounter].dataBits = Convert.ToString(reader["data_bits"]);
+                                config[portCounter].stopBits = Convert.ToString(reader["stop_bits"]);
+                                config[portCounter].parity = Convert.ToString(reader["parity"]);
+                                config[portCounter].handShaking = Convert.ToString(reader["handshake"]);
+                                config[portCounter].timeOut = Convert.ToString(reader["timeout"]);
+                                if (config[portCounter].portData == null) config[portCounter].portData = new List<Attributes.PortData> { };
+                                else config[portCounter].portData.Clear();
+                                ports += "'" + config[portCounter].portName + "',";
+                                portCounter++;
+                            }
+                        }
+                    }
 
                     //  Read the data to send through the serial port
                     queryString = @"SELECT[id]
@@ -89,47 +87,45 @@ namespace com_port_to_database
                                         WHERE port_name IN(" + ports.Remove(ports.Length - 1) + ")" +
                                         "GROUP BY port_name, send_data, id ORDER BY id;";
 
-                    command = new OdbcCommand(queryString, connection);
 
-                    // Execute the data reader and access the data to send
-                    reader = command.ExecuteReader();
-
-                    if (!reader.HasRows) return null;
-
-                    // Add the data to send to the structure 
-                    while (reader.Read())
+                    using (OdbcCommand command = new OdbcCommand(queryString, connection))
                     {
-                        for (int i = 0; i < config.Length; i++)
+                        // Execute the data reader and access the data to send
+                        using (OdbcDataReader reader = command.ExecuteReader())
                         {
-                            if (config[i].portName == Convert.ToString(reader["port_name"]))
+                            if (!reader.HasRows || String.IsNullOrEmpty(ports)) return 0;
+
+                            // Add the data to send to the structure 
+                            while (reader.Read())
                             {
-                                Attributes.PortData portData = new Attributes.PortData();
-                                portData.id = Convert.ToString(reader["id"]);
-                                portData.send = Convert.ToString(reader["send_data"]);
-                                config[i].portData.Add(portData);
+                                for (int i = 0; i < config.Length; i++)
+                                {
+                                    if (config[i].portName == Convert.ToString(reader["port_name"]))
+                                    {
+                                        Attributes.PortData portData = new Attributes.PortData();
+                                        portData.id = Convert.ToString(reader["id"]);
+                                        portData.send = Convert.ToString(reader["send_data"]);
+                                        config[i].portData.Add(portData);
+                                    }
+                                }
                             }
                         }
                     }
-
-                    // Always call Close and Dispose when done reading
-                    reader.Close();
-                    command.Dispose();
-
                     /* The connection is automatically closed at
                        the end of the Using block. */
-                    return config;
+                    return portCounter;
                 }
 
             }
             catch (OdbcException e)
             {
                 Service.log.Error(e);
-                return null;
+                return 0;
             }
             catch (Exception e)
             {
                 Service.log.Error("The exception occurred while reading the COM-port database configuration : " + e);
-                return null;
+                return 0;
             }
         }
 
@@ -138,21 +134,24 @@ namespace com_port_to_database
         {
             try
             {
-                string queryString = "UPDATE [Com_Port].[dbo].[port_data] " +
-                "SET response_date_time = '" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "'," +
-                "response_data = '" + message + "' " +
-                "WHERE id = '" + id + "';";
                 using (OdbcConnection connection = new OdbcConnection(connectionString))
                 {
-                    OdbcCommand command = new OdbcCommand(queryString, connection);
+                    // Create and ODBC connection
                     connection.Open();
 
-                    // Execute the data reader and write the comp port data to port_data table
-                    OdbcDataReader reader = command.ExecuteReader();
+                    string queryString = "UPDATE [Com_Port].[dbo].[port_data] " +
+                                         "SET response_date_time = '" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "'," +
+                                         "response_data = '" + message + "' " +
+                                         "WHERE id = '" + id + "';";
 
-                    // Always call Close and Dispose when done reading
-                    reader.Close();
-                    command.Dispose();
+                    using (OdbcCommand command = new OdbcCommand(queryString, connection))
+                    {
+                        // Execute the data reader and write the serial port data to SQL database table
+                        using (OdbcDataReader reader = command.ExecuteReader())
+                        {
+
+                        }
+                    }
                     /* The connection is automatically closed at
                     the end of the Using block. */
                 }

@@ -67,7 +67,7 @@ namespace com_port_to_database
                 Service.log.Debug(Convert.ToString(portConfig.portName) + " is open");
                 // Create a new thread to read and write on the serial port 
                 _continue = true;
-                _readThread = new Thread(() => PortBegin(portConfig.portData));
+                _readThread = new Thread(() => PortBegin(ref portConfig.portData));
                 try
                 {
                     _readThread.Start();
@@ -81,13 +81,12 @@ namespace com_port_to_database
         }
 
         // The method reads and writes data on the serial port 
-        private void PortBegin(List<Attributes.PortData> portData)
+        private void PortBegin(ref List<Attributes.PortData> portData)
         {
             byte i = 0;
             int len = portData.Count;
             Attributes.ReadData readData = 
             new Attributes.ReadData { id = portData[i].id, read = null };
-
 
             while (_continue && _run)
             {
@@ -98,12 +97,12 @@ namespace com_port_to_database
                     PortSend(portData[i].send);
                 }
 
-                readData = PortRead(readData);
+                PortRead(ref readData);
 
                 // The static method writes the serial port data to SQL database
                 if (!String.IsNullOrEmpty(readData.read))
                 {
-                    SqlData.Write(readData.id, readData.read);
+                    //SqlData.Write(readData.id, readData.read);
                 }
 
                 if (i < len - 1) i++;
@@ -117,20 +116,18 @@ namespace com_port_to_database
         }
 
         // Read the data from the serial port using ReadLine method
-        private Attributes.ReadData PortRead(Attributes.ReadData rd)
+        private void PortRead(ref Attributes.ReadData rd)
         {
             try
             {
                 // Read the serial port data
                 string message = _serialPort.ReadLine();
                 rd.read = message;
-                return rd;
             }
             catch (TimeoutException) { rd.read = null; }
             catch (ThreadAbortException) { _continue = false; }
             catch (IOException) { _continue = false; }
             catch (Exception) { _continue = false; }
-            return rd;
         }
 
         // Send the data to the serial port using WriteLine method
