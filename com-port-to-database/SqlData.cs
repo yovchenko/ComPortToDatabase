@@ -161,7 +161,7 @@ namespace com_port_to_database
 
                     string queryString = "UPDATE [Com_Port].[dbo].[port_data] " +
                                          "SET response_date_time = '" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "'," +
-                                         "response_data = '" + message + "' " +
+                                         "response_data = " + (String.IsNullOrEmpty(message) ? "NULL " : "'" + message + "' ") + 
                                          "WHERE id = '" + id + "';";
 
                     using (OdbcCommand command = new OdbcCommand(queryString, connection))
