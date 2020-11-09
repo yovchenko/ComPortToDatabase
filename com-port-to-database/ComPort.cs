@@ -22,10 +22,13 @@ namespace com_port_to_database
         // The method opens a new serial port connection
         public void Open()
         {
+            bool _error = false;
+
             _serialPort = new SerialPort();
 
             // At least one thread is going to be created
             _run = true;
+
 
             try
             {
@@ -52,17 +55,17 @@ namespace com_port_to_database
                 _serialPort.Open();
             }
             catch (UnauthorizedAccessException e)
-            { Service.log.Error(e); }
+            { Service.log.Error(e); _error = true; }
             catch (ArgumentOutOfRangeException e)
-            { Service.log.Error(e); }
+            { Service.log.Error(e); _error = true; }
             catch (ArgumentException e)
-            { Service.log.Error(e); }
+            { Service.log.Error(e); _error = true; }
             catch (IOException e)
-            { Service.log.Error(e); }
+            { Service.log.Error(e); _error = true; }
             catch (InvalidOperationException e)
-            { Service.log.Error(e); }
+            { Service.log.Error(e); _error = true; }
 
-            if (_serialPort.IsOpen)
+            if (_serialPort.IsOpen && _error == false)
             {
                 Service.log.Debug(Convert.ToString(portConfig.portName) + " is open");
                 // Create a new thread to read and write on the serial port 
