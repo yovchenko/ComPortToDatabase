@@ -79,6 +79,7 @@ namespace com_port_to_database
                 catch (OutOfMemoryException e) { Service.log.Error(e); }
             } else
             {
+                Thread.Sleep(Service.millisec);
                 Service.InitConfig();
             }
         }
@@ -103,7 +104,7 @@ namespace com_port_to_database
                 PortRead(ref readData);
 
                 // The static method writes the serial port data to SQL database
-                SqlData.Write(readData.id, readData.read);
+                if (!String.IsNullOrEmpty(readData.read)) SqlData.Write(readData.id, readData.read);
                 
                 if (i < len - 1) i++;
                 else i = 0;

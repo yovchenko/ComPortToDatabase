@@ -18,6 +18,7 @@ namespace com_port_to_database
 
         private static System.Timers.Timer aTimer;
 
+        public static int millisec = 5000;
         // The method runs when the service is about to start
         public void OnStart()
         {
@@ -29,7 +30,7 @@ namespace com_port_to_database
             // A timer creation 
             aTimer = new System.Timers.Timer
             {
-                Interval = 5000
+                Interval = millisec
             };
 
             // The event for the timer. 
