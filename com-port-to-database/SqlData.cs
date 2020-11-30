@@ -23,7 +23,7 @@ namespace com_port_to_database
 
                     // Get number of rows with the serial port settings
                     string queryString = @"SELECT COUNT(*) OVER () AS TotalRecords 
-                                           FROM[Com_Port].[dbo].[port_config] AS pc
+                                           FROM [dbo].[port_config] AS pc
                                            JOIN port_data AS pd ON pc.port_name = pd.port_name
                                            GROUP BY pc.port_name;";
 
@@ -56,7 +56,7 @@ namespace com_port_to_database
 	                                        ,pc.[parity]
 	                                        ,pc.[handshake]
 	                                        ,pc.[timeout]
-                                    FROM [Com_Port].[dbo].[port_config] AS pc 
+                                    FROM [dbo].[port_config] AS pc 
                                     JOIN port_data AS pd ON pc.port_name = pd.port_name;";
 
                     string ports = null;
@@ -98,7 +98,7 @@ namespace com_port_to_database
                     queryString = @"SELECT[id]
                                           ,[port_name]
                                           ,[send_data]
-                                        FROM [Com_Port].[dbo].[port_data] 
+                                        FROM [dbo].[port_data] 
                                         WHERE port_name IN(" + ports.Remove(ports.Length - 1) + ")" +
                                         "GROUP BY port_name, send_data, id ORDER BY id;";
 
@@ -159,7 +159,7 @@ namespace com_port_to_database
                     // Create and ODBC connection
                     connection.Open();
 
-                    string queryString = "UPDATE [Com_Port].[dbo].[port_data] " +
+                    string queryString = "UPDATE [dbo].[port_data] " +
                                          "SET response_date_time = '" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "'," +
                                          "response_data = '" + message + "' " +
                                          "WHERE id = '" + id + "';";
