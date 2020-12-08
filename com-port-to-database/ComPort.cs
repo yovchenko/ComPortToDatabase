@@ -6,10 +6,11 @@ using System.IO;
 
 namespace com_port_to_database
 {
-     class ComPort
+    public class ComPort
     {
         public static bool _run;
         public bool _continue;
+
         private SerialPort _serialPort;
         private Thread _readThread;
         private Attributes.PortConfig portConfig;
@@ -20,7 +21,7 @@ namespace com_port_to_database
         }
 
         // The method opens a new serial port connection
-        public void Open()
+        public int Open()
         {
             bool _error = false;
 
@@ -47,7 +48,7 @@ namespace com_port_to_database
             catch (Exception e)
             {
                 Service.log.Error("The com port settings error: " + e);
-                return;
+                return 0x0A;
             }
 
             try
@@ -81,7 +82,9 @@ namespace com_port_to_database
             {
                 Thread.Sleep(Service.millisec);
                 Service.InitConfig();
+                return 0x0B;
             }
+            return 0x00;
         }
 
         // The method reads and writes data on the serial port 

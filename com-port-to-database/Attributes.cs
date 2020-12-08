@@ -2,7 +2,7 @@
 
 namespace com_port_to_database
 {
-    class Attributes
+    public class Attributes
     {
         #region Data structures
         public struct PortData

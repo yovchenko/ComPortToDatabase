@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 using System.Data.Odbc;
 using System.Configuration;
 using com_port_to_database;
@@ -9,7 +8,7 @@ namespace com_port_to_database_unit_tests
     [TestClass]
     public class ServiceSpec : Service
     {
-        private static int status = 0xFF; // the initial status
+        private static int status = 0xFF; // The initial status
 
         private static string connectionString;
         [TestInitialize()]
@@ -27,13 +26,13 @@ namespace com_port_to_database_unit_tests
         public void ConfigTestEmptyTables()
         {
             // Read status of the serial port configuration 
-            status = Service.InitConfig();
+            status = InitConfig();
             /* Check status - no valid configuration.
                     All MS SQL tables are empty.  */
             Assert.AreEqual(status, 0x0A);
         }
         [TestMethod]
-        public void ConfigTestDefault()
+        public void ConfigTestDefaultValue()
         {
             using (OdbcConnection connection = new OdbcConnection(connectionString))
             {
@@ -68,7 +67,7 @@ namespace com_port_to_database_unit_tests
             }
 
             // Read status of the serial port configuration 
-            status = Service.InitConfig();
+            status = InitConfig();
 
             // Check status not - initial value
             Assert.AreNotEqual(status, 0xFF);
