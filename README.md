@@ -15,32 +15,33 @@ Clone the repo and create and setup the app database
         $ git clone https://github.com/yovchenko/com-port-to-database.git
         $ cd com-port-to-database
         $ create database using SSMS and database.sql
-        $ create ODBC Data Source - Com_Port https://docs.microsoft.com/en-ca/sql/odbc/admin/odbc-data-source-administrator?view=sql-server-ver15
+        $ create ODBC Data Source - Com_Port 
+        https://docs.microsoft.com/en-ca/sql/odbc/admin/odbc-data-source-administrator?view=sql-server-ver15
 
 ## Description of the database 
 ```
 port_config table 
--------------------------------------------------------------------------------------------------------------------------------------
-│ PK  │ FK  │   Field 	    │        constraints 	    │      Type 	      │ NN  │	Default  │	        Description             │
--------------------------------------------------------------------------------------------------------------------------------------
-│  +  │ 	│  	port_name 	│    CK__port_conf__port 	│      varchar(31)	  │	 +  │            │   Communications port name       │
-│     │ 	│  	baud_rate 	│      	                    │      int	  	  	  │  +  │            │   Serial baud rate               │
-│     │ 	│  	data_bits 	│    CK__port_conf__data	│      smallint 	  │	 +	│            │   Data bits length               │
-│     │ 	│  	stop_bits 	│    CK__port_conf__stop	│      varchar(31) 	  │	 +	│            │   Number of stopbits per byte    │
-│     │ 	│  	parity   	│    CK__port_conf__parit	│      varchar(31) 	  │	 +	│            │   Values of parity-checking      │
-│     │ 	│  	handshake 	│    CK__port_conf__hands 	│      varchar(31) 	  │	 +	│            │   One of the Handshake values    │
-│     │ 	│  	timeout  	│     	                    │      int 	  	  	  │  +  │            │   Milliseconds before a time-out │
-------------------------------------------------------------------------------------------------------------------------------------- 
+-----------------------------------------------------------------------------------------------------------------
+│ PK  │ FK  │   Field 	│    constraints 	   │    Type 	 │ NN  │  Default  │	      Description           │
+-----------------------------------------------------------------------------------------------------------------
+│  +  │ 	│ port_name │ CK__port_conf__port  │ varchar(31) │	+  │           │ Communications port name       │
+│     │ 	│ baud_rate │      	               │ int	  	 │  +  │           │ Serial baud rate               │
+│     │ 	│ data_bits │ CK__port_conf__data  │ smallint 	 │	+  │           │ Data bits length               │
+│     │ 	│ stop_bits │ CK__port_conf__stop  │ varchar(31) │	+  │           │ Number of stopbits per byte    │
+│     │ 	│ parity   	│ CK__port_conf__parit │ varchar(31) │	+  │           │ Values of parity-checking      │
+│     │ 	│ handshake │ CK__port_conf__hands │ varchar(31) │	+  │           │ One of the Handshake values    │
+│     │ 	│ timeout  	│     	               │ int 	  	 │  +  │           │ Milliseconds before a time-out │
+-----------------------------------------------------------------------------------------------------------------
 port_data table
--------------------------------------------------------------------------------------------------------------------------------------
-│ PK  │ FK  │   Field 	    │        constraints 	    │      Type 	      │ NN  │	Default  │	        Description             │
--------------------------------------------------------------------------------------------------------------------------------------
-│  +  │ 	│  	id       	│                        	│      int      	  │	 +  │            │   Command queue number           │
-│     │  +	│  	port_name 	│                        	│      varchar(31)	  │	 +  │            │   Communications port name       │
-│     │ 	│  	send_data 	│      	                    │      varchar(MAX)	  │     │            │   Command ASCII                  │
-│     │ 	│  	res_data 	│    	                    │      varchar(MAX)   │	 	│            │   Response ASCII                 │
-│     │ 	│  	res_date 	│    	                    │      datetime 	  │	 	│            │   Response data and time         │
-------------------------------------------------------------------------------------------------------------------------------------- 
+-----------------------------------------------------------------------------------------------------------------
+│ PK  │ FK  │   Field 	│    constraints 	   │    Type 	 │ NN  │  Default │	        Description             │
+-----------------------------------------------------------------------------------------------------------------
+│  +  │ 	│ id       	│                      │ int      	 │	+  │          │ Command queue number            │
+│     │  +	│ port_name │                      │ varchar(31) │	+  │          │ Communications port name        │
+│     │ 	│ send_data │      	               │ varchar(MAX)│     │          │ Command ASCII                   │
+│     │ 	│ res_data 	│    	               │ varchar(MAX)│	   │          │ Response ASCII                  │
+│     │ 	│ res_date 	│    	               │ datetime 	 │	   │          │ Response data and time          │
+----------------------------------------------------------------------------------------------------------------- 
 ```
 
 ## NuGet packages 
