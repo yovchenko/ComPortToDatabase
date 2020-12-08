@@ -5,7 +5,7 @@ using System.Configuration;
 
 namespace com_port_to_database
 {
-    class SqlData
+    internal sealed class SqlData
     {
         // ODBC-connection string
         private static readonly string connectionString = ConfigurationManager.ConnectionStrings["Com_Port"].ConnectionString;

@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("com-port-to-database")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("The app allows to send COM port data to ODBC database.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("com-port-to-database")]
