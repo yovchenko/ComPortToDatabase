@@ -6,6 +6,7 @@ The app allows reading and writing serial port data on Windows with MS SQL datab
 - [SQL Server 2019 Express](https://www.microsoft.com/en-us/Download/details.aspx?id=101064) - Microsoft SQL Server Express is a version of Microsoft's SQL Server relational database management system that is free to download.
 - [SSMS](https://docs.microsoft.com/en-us/sql/ssms/download-sql-server-management-studio-ssms?view=sql-server-ver15) - SSMS is an integrated environment for managing SQL Server infrastructure.
 - [.NET Memory Profiler](https://memprofiler.com/download) - .NET Memory Profiler is a powerful tool for finding memory leaks and optimizing the memory usage in programs written in C#.
+- [Visual Studio](https://visualstudio.microsoft.com/vs/community/) - A fully-featured, extensible, free IDE for creating modern applications for Android, iOS, Windows, as well as web applications and cloud services.
 - [git](https://github.com/git/git) - Git is a fast, scalable, distributed revision control system.
 
 ## Common setup
@@ -14,13 +15,15 @@ Clone the repo and create and setup the app database
 
         $ git clone https://github.com/yovchenko/com-port-to-database.git
         $ cd com-port-to-database
-        $ create database using SSMS and database.sql
-        $ create ODBC Data Source - Com_Port 
-        https://docs.microsoft.com/en-ca/sql/odbc/admin/odbc-data-source-administrator?view=sql-server-ver15
+        $ database.sql
+        
+Create database using SSMS and database.sql
+Set up a Microsoft SQL Server ODBC Data Source. For further information, please see the following link:
+https://docs.microsoft.com/en-us/sql/odbc/admin/odbc-data-source-administrator?view=sql-server-ver15
+
+DSN connection string attribute is specified in the connection string which you can find in *.config file  
 
 ## Description of the database 
-
-port_config table 
 
 | PK  | FK  |   Field 	|    Constraints       |    Type     | NN  |  Default |	      Description               | 
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -49,6 +52,8 @@ port_data table
 - [RuntimeInformation](https://www.nuget.org/packages/System.Runtime.InteropServices.RuntimeInformation/4.3.0?_src=template) - Provides APIs to query about runtime and OS information.
 
 ## Getting started 
+
+Open your project using Visual Studio and build the app.
 
 To install the service, run the following 
 
