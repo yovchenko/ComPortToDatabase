@@ -55,15 +55,7 @@ namespace com_port_to_database
             {
                 _serialPort.Open();
             }
-            catch (UnauthorizedAccessException e)
-            { Service.log.Error(e); _error = true; }
-            catch (ArgumentOutOfRangeException e)
-            { Service.log.Error(e); _error = true; }
-            catch (ArgumentException e)
-            { Service.log.Error(e); _error = true; }
-            catch (IOException e)
-            { Service.log.Error(e); _error = true; }
-            catch (InvalidOperationException e)
+            catch (Exception e)
             { Service.log.Error(e); _error = true; }
 
             if (_serialPort.IsOpen && _error == false)
@@ -143,8 +135,6 @@ namespace com_port_to_database
               _serialPort.WriteLine(IncomingData);
             }
              catch (TimeoutException) { }  
-             catch (InvalidOperationException) { _continue = false; }
-             catch (ArgumentNullException) { _continue = false; }
              catch (Exception) { _continue = false; }
         }
     }
